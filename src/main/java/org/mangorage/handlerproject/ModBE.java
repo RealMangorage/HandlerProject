@@ -12,26 +12,34 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mangorage.handlerproject.core.HandlerMode;
+import org.mangorage.handlerproject.core.LimitedSlotLogic;
 import org.mangorage.handlerproject.core.SlotItemStackHandler;
 import org.mangorage.handlerproject.core.SlotItemStackHandlerProxy;
 import org.mangorage.handlerproject.core.SlotLogic;
 import org.mangorage.handlerproject.core.SlotLogicBuilder;
-import org.mangorage.handlerproject.core.SlotLogicHandler;
 
 
 public class ModBE extends BlockEntity {
     private final SlotItemStackHandler handler = new SlotItemStackHandler(
             SlotLogicBuilder.create()
-                    .slot(0, new SlotLogic(HandlerMode.BOTH, stack -> stack.is(Tags.Items.ORES)))
+                    .slot(0, new LimitedSlotLogic(HandlerMode.BOTH, 10, stack -> stack.is(Tags.Items.ORES)))
                     .build(),
             1
     );
 
     private final LazyOptional<IItemHandler> LAZY_HANDLER_UP = LazyOptional.of(
+            () -> new SlotItemStackHandlerProxy(
+                    SlotLogicBuilder.create()
+                            .slot(0, new SlotLogic(HandlerMode.INSERT, stack -> stack.is(Tags.Items.ORES)))
+                            .build(),
+                    handler
+            )
+    );
+
+    private final LazyOptional<IItemHandler> LAZY_HANDLER_WEST = LazyOptional.of(
             () -> new SlotItemStackHandlerProxy(
                     SlotLogicBuilder.create()
                             .slot(0, new SlotLogic(HandlerMode.INSERT, stack -> stack.is(Tags.Items.ORES)))
@@ -63,6 +71,8 @@ public class ModBE extends BlockEntity {
                 return LAZY_HANDLER_UP.cast();
             if (side == Direction.DOWN)
                 return LAZY_HANDLER_DOWN.cast();
+            if (side == Direction.WEST)
+                return LAZY_HANDLER_WEST.cast();
         }
         return LazyOptional.empty();
     }
